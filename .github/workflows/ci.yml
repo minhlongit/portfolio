@@ -1,0 +1,64 @@
+name: CI/CD for Vue.js
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - name: Install npm
+        run: npm install -g npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Build project
+        run: npm run build
+
+      - name: Deploy to development environment
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          npm install -g gh-pages
+          npm run build
+          gh-pages -d dist -r develop
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to staging environment
+        if: github.ref == 'refs/heads/staging'
+        run: |
+          npm install -g gh-pages
+          npm run build
+          gh-pages -d dist -r staging
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to production environment
+        if: github.ref == 'refs/heads/main'
+        run: |
+          npm install -g gh-pages
+          npm run build
+          gh-pages -d dist -r main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
